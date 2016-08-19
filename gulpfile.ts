@@ -4,34 +4,26 @@ const tsc = require("gulp-typescript");
 const sourcemaps = require('gulp-sourcemaps');
 const tsProject = tsc.createProject("./tsconfig.json");
 const tslint = require('gulp-tslint');
+const browserSync = require('browser-sync').create();
 
-
-/**
- * Remove build directory.
- */
-gulp.task('clean', (cb) => {
-    return del(["build"], cb);
+gulp.task("clean",(cb)=>{
+  return del(["build"],cb);
 });
 
-/**
- * Compile TypeScript sources and create sourcemaps in build directory.
- */
-gulp.task("compile", () => {
-    var tsResult = gulp.src("src/**/*.ts")
-        .pipe(sourcemaps.init())
-        .pipe(tsc(tsProject));
-    return tsResult.js
-        .pipe(sourcemaps.write("."))
-        .pipe(gulp.dest("build"));
+gulp.task("compile", ()=>{
+
+var tsFiles = gulp.src("src/**/*.ts").pipe(sourcemaps.init()).pipe(tsc(tsProject));
+tsFiles.js.pipe(sourcemaps.write(".")).pipe(gulp.dest("build"));
+
 });
 
-/**
- * Copy all resources that are not TypeScript files into build directory.
- */
-gulp.task("resources", () => {
-    return gulp.src(["src/**/*", "!**/*.ts"])
-        .pipe(gulp.dest("build"))
+gulp.task("resources",()=>{
+return gulp.src(["src/**/*","!**/*.ts"]).pipe(gulp.dest("build"));
 });
+
+
+
+
 
 /**
  * Copy all required libraries into build directory.
@@ -55,3 +47,24 @@ gulp.task("libs", () => {
 gulp.task("build", ['compile', 'resources', 'libs'], () => {
     console.log("Building the project ...")
 });
+
+
+gulp.task("startServer", ['compile','resources'],()=> {
+
+    browserSync.init({
+    "port": 8000,
+    "files": [
+      "build/**/*.{html,htm,css,js}"
+    ],
+    "server": {
+      "baseDir": "build"
+    }
+    });
+
+    gulp.watch('src/**/*.ts',['compile']);
+    gulp.watch('src/**/*.{html,css}',['resources']);
+    gulp.watch('build/**/*.{html,css,js}').on('change', browserSync.reload);
+});
+
+
+gulp.task("default", ['startServer']);
