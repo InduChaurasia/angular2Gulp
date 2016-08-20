@@ -5,6 +5,9 @@ const sourcemaps = require('gulp-sourcemaps');
 const tsProject = tsc.createProject("./tsconfig.json");
 const tslint = require('gulp-tslint');
 const browserSync = require('browser-sync').create();
+var concat = require('gulp-concat');
+var minifyCSS = require('gulp-minify-css');
+var rename = require('gulp-rename');
 
 gulp.task("clean",(cb)=>{
   return del(["build"],cb);
@@ -21,9 +24,12 @@ gulp.task("resources",()=>{
 return gulp.src(["src/**/*","!**/*.ts"]).pipe(gulp.dest("build"));
 });
 
-
-
-
+gulp.task("cssMinification",()=>{
+gulp.src("src/css/*.css")
+    .pipe(minifyCSS())
+    .pipe(concat('style.css'))
+    .pipe(gulp.dest("./build/css"));
+});
 
 /**
  * Copy all required libraries into build directory.
@@ -44,12 +50,12 @@ gulp.task("libs", () => {
 /**
  * Build the project.
  */
-gulp.task("build", ['compile', 'resources', 'libs'], () => {
+gulp.task("build", ['compile', 'resources', 'libs','cssMinification'], () => {
     console.log("Building the project ...")
 });
 
 
-gulp.task("startServer", ['compile','resources'],()=> {
+gulp.task("startServer", ['compile','resources','cssMinification'],()=> {
 
     browserSync.init({
     "port": 8000,
@@ -63,6 +69,7 @@ gulp.task("startServer", ['compile','resources'],()=> {
 
     gulp.watch('src/**/*.ts',['compile']);
     gulp.watch('src/**/*.{html,css}',['resources']);
+    gulp.watch('css/*.css',['cssMinification']);
     gulp.watch('build/**/*.{html,css,js}').on('change', browserSync.reload);
 });
 
